@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Love Poem Generator</title>
+  <style>
+    :root { --bg:#f8f7fb; --card:#ffffff; --text:#1f2937; --muted:#6b7280; }
+    * { box-sizing:border-box; }
+    html, body { height:100%; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: radial-gradient(1200px 800px at 50% -10%, #fff 0%, var(--bg) 60%, #f3f1f7 100%); color:var(--text); }
+    .wrap { display:grid; place-items:center; min-height:100%; padding:24px; position:relative; }
+    .card { width:min(800px, 92vw); background:var(--card); border-radius:20px; box-shadow:0 10px 30px rgba(31,41,55,0.12); padding:24px; position:relative; z-index:1; }
+    h1 { margin:0 0 8px; font-size:clamp(1.25rem, 0.9rem + 1.5vw, 1.8rem); }
+    p.subtle { color:var(--muted); margin:0 0 16px; font-size:0.95rem; }
+    .controls { display:flex; gap:10px 14px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+    button { border:0; background:var(--text); color:#fff; padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; transition:transform .06s ease, filter .2s ease; }
+    button:hover { filter:brightness(1.05); }
+    button:active { transform:translateY(1px); }
+    .checkbox { display:inline-flex; align-items:center; gap:8px; font-size:0.95rem; color:var(--muted); }
+    .poem { white-space:pre-wrap; background:#fcfcfe; border:1px solid #ededf5; border-radius:14px; padding:16px; line-height:1.6; min-height:200px; font-family: ui-serif, Georgia, Cambria, Times, 'Times New Roman', serif; font-size:1.05rem; }
+    .footer { margin-top:10px; color:var(--muted); font-size:0.85rem; }
+    canvas#effects { position:fixed; inset:0; width:100vw; height:100vh; z-index:999; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card" aria-live="polite">
+      <h1>Love Poem Generator</h1>
+      <p class="subtle">Click to compose a verse of classical affection. Move your mouse for a light trail of hearts.</p>
+      <div class="controls">
+        <button id="generate">Generate love letter</button>
+        <label class="checkbox"><input type="checkbox" id="allcaps" /> All caps</label>
+      </div>
+      <div id="poem" class="poem"></div>
+    </section>
+  </div>
+  <canvas id="effects"></canvas>
+
+  <script>
+    const canvas=document.getElementById('effects'); const ctx=canvas.getContext('2d'); let dpr=Math.max(1,window.devicePixelRatio||1);
+    function resize(){canvas.width=innerWidth*dpr;canvas.height=innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);} resize(); addEventListener('resize',resize);
+    const particles=[]; const MAX_PARTICLES=160;
+    function drawHeart(ctx,x,y,s,rot,a,hue){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.beginPath();const k=s/16;ctx.moveTo(0,-6*k);ctx.bezierCurveTo(-8*k,-16*k,-16*k,-2*k,0,8*k);ctx.bezierCurveTo(16*k,-2*k,8*k,-16*k,0,-6*k);ctx.closePath();ctx.fillStyle=`hsla(${hue},85%,60%,${a*0.7})`;ctx.fill();ctx.restore();}
+    function spawnHeart(x,y){const size=6+Math.random()*10;const angle=(-Math.PI/2)+(Math.random()-0.5)*0.6;const speed=20+Math.random()*35;particles.push({x,y,vx:Math.cos(angle)*speed/60,vy:Math.sin(angle)*speed/60,life:0,ttl:0.5+Math.random()*0.5,size,rot:Math.random()*Math.PI,spin:(Math.random()-0.5)*0.6,hue:343+Math.random()*16});if(particles.length>MAX_PARTICLES)particles.splice(0,particles.length-MAX_PARTICLES);} function spawnBurst(x,y,count=18){for(let i=0;i<count;i++)spawnHeart(x,y);} function spawnTrail(x,y){for(let i=0;i<2;i++)spawnHeart(x,y);} let lastT=performance.now(); function tick(t){const dt=Math.min(0.05,(t-lastT)/1000);lastT=t;ctx.clearRect(0,0,canvas.width/dpr,canvas.height/dpr);for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.life+=dt;if(p.life>p.ttl){particles.splice(i,1);continue;}p.vy-=10*dt;p.x+=p.vx;p.y+=p.vy;p.rot+=p.spin*dt;const alpha=Math.max(0,1-p.life/p.ttl);drawHeart(ctx,p.x,p.y,p.size*(0.9+0.2*alpha),p.rot,alpha,p.hue);}requestAnimationFrame(tick);}requestAnimationFrame(tick); let lastTrail=0; addEventListener('mousemove',e=>{const n=performance.now();if(n-lastTrail>25){spawnTrail(e.clientX,e.clientY);lastTrail=n;}}); addEventListener('mousedown',e=>spawnBurst(e.clientX,e.clientY,22));
+
+    // ===== Expanded Classical Lexicon =====
+    const first=['Darling','Dearest','Beloved','Fairest','Sweetest','Precious','My Love','My Heart','My Soul','My Star','My Dove','My Treasure','My Dearest','My Belovèd','My Fair One','My Angel','My Light','My Delight','My Joy','My Constant','My True Love'];
+
+    const second=['love','sweetheart','darling','beloved','dear heart','moppet','duck','treasure','honey','petal','rose','dove','angel','jewel','pearl','swan','blossom','dearie','my joy','light','sweet','belovèd'];
+
+    const adjectives=['adorable','affectionate','amorous','ardent','ardorous','beauteous','benignant','bewitching','blessed','blooming','bonny','boundless','bright','burning','celestial','charming','constant','courtly','dainty','dear','devout','divine','endearing','enchanting','eternal','faithful','fervent','fond','gentle','golden','gracious','heavenly','honourable','kindly','lovely','loyal','luminous','modest','noble','passionate','pure','radiant','sacred','seraphic','soft','steadfast','sublime','sweet','tender','timeless','true','virtuous','wistful'];
+
+    const nouns=['affection','ardour','beauty','bliss','charm','constancy','devotion','desire','dream','emotion','faith','fancy','fidelity','fondness','friendship','grace','heart','hope','joy','kindness','kiss','light','longing','love','loyalty','passion','pleasure','promise','rapture','regard','romance','sentiment','smile','song','soul','sweetness','sympathy','tenderness','trust','union','virtue','warmth','wonder'];
+
+    const adverbs=['affectionately','ardently','beautifully','blissfully','breathlessly','devotedly','earnestly','faithfully','fondly','gracefully','heartily','kindly','lovingly','passionately','purely','reverently','sincerely','softly','sweetly','tenderly','truly','warmly','wistfully'];
+
+    const verbs=['adores','cherishes','clings to','cares for','longs for','treasures','esteems','honours','idolizes','yearns for','is devoted to','holds dear','is bound to','is faithful to','is drawn to','is enraptured by','is enamoured of','seeks','worships','blesses','kisses','honours','respects','reveres'];
+
+    const pick=a=>a[Math.floor(Math.random()*a.length)]; const maybe=w=>Math.random()>0.5?' '+pick(w):'';
+    function longer(){return 'My'+maybe(adjectives)+' '+pick(nouns)+maybe(adverbs)+' '+pick(verbs)+' your'+maybe(adjectives)+' '+pick(nouns)+'. ';}
+    function shorter(){return ' '+pick(adjectives)+' '+pick(nouns);}
+    function body(){let text='';let youAre=false;for(let i=0;i<5;i++){const type=Math.random()>0.5?'longer':'shorter';if(type==='longer'){text+=longer();youAre=false;}else{if(youAre){text=text.trimEnd().replace(/\.\s*$/,'')+': my'+shorter()+'. ';youAre=false;}else{text+='You are my'+shorter()+'. ';youAre=true;}}}return text.trim();}
+    function letter(allCaps=false){const t=`${pick(first)} ${pick(second)}\n\n${body()}\n\nYours ${pick(adverbs)}`;return allCaps?t.toUpperCase():t;}
+
+    const poemBox=document.getElementById('poem'); const btn=document.getElementById('generate'); const allcaps=document.getElementById('allcaps');
+    function generate(){poemBox.textContent=letter(allcaps.checked);spawnBurst(innerWidth/2,80,14);} btn.addEventListener('click',generate);
+    generate();
+  </script>
+</body>
+</html>
